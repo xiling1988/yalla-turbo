@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Yallasana App",
+    "slug": "yallasana-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "scheme": "yallasana",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yallasana.app",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "allowBackup": true,
+      "usesCleartextTraffic": true,
+      "package": "com.yallasana.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "yallasana"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d45fd8c9-9c02-4cc2-918d-9ca8d319e50a"
+      }
+    },
+    "plugins": ["expo-web-browser", "expo-font", "expo-router"]
+  }
+}

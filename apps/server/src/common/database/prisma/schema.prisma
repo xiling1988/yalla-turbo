@@ -1,0 +1,273 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PENDING
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum IntendedRole {
+  STUDENT
+  TEACHER
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum ProfileStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum OnboardingStep {
+  NONE
+  ROLE_SELECTED
+  PROFILE_DETAILS
+  DONE
+}
+
+model User {
+  id          String  @id @default(cuid())
+  clerkUserId String  @unique
+  email       String  @unique
+  firstName   String?
+  lastName    String?
+  displayName String?
+
+  role           Role           @default(PENDING) // finalized role
+  intendedRole   IntendedRole? // selected during onboarding
+  onboardingStep OnboardingStep @default(NONE)
+  profileStatus  ProfileStatus  @default(NOT_STARTED)
+  status         AccountStatus  @default(ACTIVE)
+
+  // lightweight analytics
+  signedUpAt          DateTime  @default(now())
+  onboardingStartedAt DateTime?
+  roleSelectedAt      DateTime?
+  profileCompletedAt  DateTime?
+  lastLoginAt         DateTime?
+  lastActiveAt        DateTime?
+
+  teacherProfile TeacherProfile?
+  studentProfile StudentProfile?
+
+  @@index([clerkUserId])
+  @@index([role])
+  @@index([intendedRole])
+}
+
+model TeacherProfile {
+  id                  String                 @id @default(cuid())
+  userId              String                 @unique
+  user                User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName         String?
+  headline            String?
+  shortBio            String?
+  about               String?
+  yearsExperience     Int                    @default(0)
+  certifications      Json?
+  offeredFormats      TeacherSessionFormat[]
+  sessionDurationMins Int?
+  pricePerSession     Decimal?               @db.Decimal(8, 2)
+  currency            String?                @default("USD")
+  acceptsPrivate      Boolean                @default(true)
+  acceptsGroup        Boolean                @default(false)
+  travelPolicy        TeacherTravelPolicy?
+  travelRadiusKm      Int?
+  averageRating       Decimal?               @db.Decimal(3, 2)
+  reviewCount         Int                    @default(0)
+  avatarUrl           String?
+  timezone            String?
+  availability        Json? // placeholder until scheduling is designed
+  bases               TeacherBase[]
+  specialties         TeacherSpecialty[]
+  languages           TeacherLanguage[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+}
+
+model StudentProfile {
+  id                      String                      @id @default(cuid())
+  userId                  String                      @unique
+  user                    User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName             String?
+  shortBio                String?
+  goals                   String?
+  experienceLevel         StudentExperienceLevel?
+  preferredFormats        StudentSessionFormat[]
+  preferredSession        StudentSessionType?
+  availabilityPreferences Json?
+  homeLatitude            Decimal?                    @db.Decimal(10, 7)
+  homeLongitude           Decimal?                    @db.Decimal(10, 7)
+  searchRadiusKm          Int?
+  neighborhood            String?
+  city                    String?
+  timezone                String?
+  interests               StudentSpecialtyInterest[]
+  languages               StudentLanguagePreference[]
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
+}
+
+model TeacherBase {
+  id           String         @id @default(cuid())
+  teacherId    String
+  nickname     String?
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  countryCode  String?
+  latitude     Decimal?       @db.Decimal(10, 7)
+  longitude    Decimal?       @db.Decimal(10, 7)
+  isPrimary    Boolean        @default(false)
+  notes        String?
+  teacher      TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([teacherId])
+}
+
+model Specialty {
+  id               String                     @id @default(cuid())
+  name             String                     @unique
+  slug             String                     @unique
+  description      String?
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  teachers         TeacherSpecialty[]
+  studentInterests StudentSpecialtyInterest[]
+}
+
+model TeacherSpecialty {
+  id          String                   @id @default(cuid())
+  teacherId   String
+  specialtyId String
+  proficiency TeacherProficiencyLevel?
+  teacher     TeacherProfile           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  specialty   Specialty                @relation(fields: [specialtyId], references: [id], onDelete: Restrict)
+  createdAt   DateTime                 @default(now())
+
+  @@unique([teacherId, specialtyId])
+  @@index([specialtyId])
+}
+
+model StudentSpecialtyInterest {
+  id          String         @id @default(cuid())
+  studentId   String
+  specialtyId String
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  specialty   Specialty      @relation(fields: [specialtyId], references: [id], onDelete: Restrict)
+  createdAt   DateTime       @default(now())
+
+  @@unique([studentId, specialtyId])
+  @@index([specialtyId])
+}
+
+model Language {
+  id                 String                      @id @default(cuid())
+  code               String                      @unique
+  name               String                      @unique
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+  teacherUses        TeacherLanguage[]
+  studentPreferences StudentLanguagePreference[]
+}
+
+model TeacherLanguage {
+  id         String         @id @default(cuid())
+  teacherId  String
+  languageId String
+  teacher    TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  language   Language       @relation(fields: [languageId], references: [id], onDelete: Restrict)
+  createdAt  DateTime       @default(now())
+
+  @@unique([teacherId, languageId])
+  @@index([languageId])
+}
+
+model StudentLanguagePreference {
+  id         String         @id @default(cuid())
+  studentId  String
+  languageId String
+  priority   Int            @default(1)
+  student    StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  language   Language       @relation(fields: [languageId], references: [id], onDelete: Restrict)
+  createdAt  DateTime       @default(now())
+
+  @@unique([studentId, languageId])
+  @@index([languageId])
+}
+
+enum StudentExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum StudentSessionType {
+  IN_PERSON
+  LIVE_VIRTUAL
+  ON_DEMAND
+}
+
+enum TeacherTravelPolicy {
+  NONE
+  STUDENT_LOCATION
+  TEACHER_BASE_ONLY
+  HYBRID
+}
+
+enum SessionFormat {
+  IN_STUDIO
+  AT_HOME
+  VIRTUAL
+}
+
+model TeacherSessionFormat {
+  id        String         @id @default(cuid())
+  teacherId String
+  format    SessionFormat
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+
+  @@unique([teacherId, format])
+  @@index([format])
+}
+
+model StudentSessionFormat {
+  id        String         @id @default(cuid())
+  studentId String
+  format    SessionFormat
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+
+  @@unique([studentId, format])
+  @@index([format])
+}
+
+enum TeacherProficiencyLevel {
+  CORE
+  SPECIALIST
+  EXPERT
+}

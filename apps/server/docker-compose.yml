@@ -1,0 +1,13 @@
+services:
+  dev-db:
+    image: postgres:13
+    ports:
+      - 5434:5432
+    environment:
+      POSTGRES_USER: yallasana
+      POSTGRES_PASSWORD: yallasanapassword
+      POSTGRES_DB: yallasanadb
+    networks:
+      - yallasana
+networks:
+  yallasana:

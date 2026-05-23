@@ -1,159 +1,113 @@
-# Turborepo starter
+# Yallasana monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+Turborepo monorepo for the Yallasana platform: marketing site, mobile app, and API server.
 
-## Using this example
+## Apps
 
-Run the following command:
+| Package | Path | Description |
+|---------|------|-------------|
+| `@yallasana/web` | `apps/web` | Next.js marketing / landing site |
+| `@yallasana/mobile` | `apps/mobile` | Expo (React Native) student app |
+| `@yallasana/server` | `apps/server` | NestJS API + Prisma + PostgreSQL |
 
-```sh
-npx create-turbo@latest
+## Prerequisites
+
+- **Node.js** 20+
+- **pnpm** 9 (`corepack enable && corepack prepare pnpm@9.0.0 --activate`)
+- **Docker** (for local Postgres used by the server)
+
+## Setup
+
+```bash
+pnpm install
 ```
 
-## What's inside?
+Copy environment files and fill in values:
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+cp apps/server/.env.example apps/server/.env
+cp apps/mobile/.env.example apps/mobile/.env
+cp apps/web/.env.example apps/web/.env
 ```
 
-Without global `turbo`, use your package manager:
+Start Postgres for the server:
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+```bash
+cd apps/server && docker compose up -d
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Run migrations (from repo root):
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+```bash
+pnpm --filter @yallasana/server prisma:migrate
 ```
 
-Without global `turbo`:
+## Development
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+Run a single app:
+
+```bash
+pnpm dev:web      # Next.js → http://localhost:3000
+pnpm dev:server   # NestJS API → http://localhost:3000 (set PORT if web also uses 3000)
+pnpm dev:mobile   # Expo dev server
 ```
 
-### Develop
+Run all apps that define `dev` (web + server + mobile):
 
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
+```bash
+pnpm dev
 ```
 
-Without global `turbo`, use your package manager:
+Other tasks:
 
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
+```bash
+pnpm lint
+pnpm check-types
+pnpm build --filter=@yallasana/web --filter=@yallasana/server
+pnpm test
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Continuous integration
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+GitHub Actions runs on every push to `main` and on pull requests (`.github/workflows/ci.yml`):
 
-```sh
-turbo dev --filter=web
+- **lint**, **check-types**, and **build** for web and server
+- **lint** and **check-types** for mobile (no build script yet)
+- **test** for server (mobile has a no-op test script)
+
+### Turborepo Remote Cache (optional, recommended)
+
+Speed up CI by sharing Turborepo cache across runs and machines:
+
+1. In [Vercel](https://vercel.com/account/tokens), create an access token.
+2. In your GitHub repo → **Settings → Secrets and variables → Actions**:
+   - **Secret** `TURBO_TOKEN` — paste the Vercel token
+   - **Variable** `TURBO_TEAM` — your Vercel team slug (the part after `vercel.com/` in your team URL)
+3. Enable Remote Caching for the team in the Vercel dashboard (team owners only).
+
+If these are not set, CI still works — Turborepo falls back to a local cache per job.
+
+### CI environment variables
+
+The workflow sets placeholder values for env vars listed in `turbo.json` so builds stay deterministic without real secrets. Override any of them via GitHub Secrets when you add integration tests that need live services.
+
+## Environment variables
+
+| App | Variables |
+|-----|-----------|
+| **server** | `DATABASE_URL`, `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `PORT` |
+| **mobile** | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` |
+| **web** | `MC_API_KEY`, `MC_LIST_ID` (Mailchimp waitlist) |
+
+For local mobile + server, point `EXPO_PUBLIC_API_URL` at your machine (`http://localhost:3000` on iOS simulator; `http://10.0.2.2:3000` on Android emulator).
+
+## Project structure
+
+```
+apps/
+  web/       # Next.js
+  mobile/    # Expo Router + NativeWind
+  server/    # NestJS + Prisma
 ```
 
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+Shared packages can be added under `packages/` when needed (e.g. shared API types).

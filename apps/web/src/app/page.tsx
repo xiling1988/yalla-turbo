@@ -83,7 +83,7 @@ export default function YallasanaComingSoon() {
     if (paused) return
     const id = setInterval(
       () => setIndex((i) => (i + 1) % PROFILES.length),
-      4500
+      4500,
     )
     return () => clearInterval(id)
   }, [paused])
@@ -136,7 +136,7 @@ export default function YallasanaComingSoon() {
         setMessage(
           data?.message ||
             data?.detail ||
-            'Something went wrong. Please try again or DM us on Instagram.'
+            'Something went wrong. Please try again or DM us on Instagram.',
         )
         console.error('Subscribe API error:', res.status, data)
         return
@@ -145,7 +145,7 @@ export default function YallasanaComingSoon() {
       setMessage(
         data && data.message
           ? data.message
-          : "You're on the list. We'll be in touch soon! ✨"
+          : "You're on the list. We'll be in touch soon! ✨",
       )
       setEmail('')
     } catch (err) {
@@ -264,7 +264,7 @@ export default function YallasanaComingSoon() {
             {/* Foreground content */}
             <div className='relative z-10 flex h-full flex-col justify-end p-5'>
               <div className='flex items-end gap-3'>
-                <img
+                <Image
                   src={current.portrait}
                   alt={`${current.name} portrait`}
                   className='h-16 w-16 rounded-2xl object-cover ring-2 ring-white/80 shadow'
@@ -305,7 +305,7 @@ export default function YallasanaComingSoon() {
                     aria-label='Previous'
                     onClick={() =>
                       setIndex(
-                        (i) => (i - 1 + PROFILES.length) % PROFILES.length
+                        (i) => (i - 1 + PROFILES.length) % PROFILES.length,
                       )
                     }
                   >
@@ -393,8 +393,8 @@ export default function YallasanaComingSoon() {
                 {status === 'loading'
                   ? 'Joining…'
                   : role === 'teacher'
-                  ? 'Join as Teacher'
-                  : 'Join Waitlist'}
+                    ? 'Join as Teacher'
+                    : 'Join Waitlist'}
               </motion.button>
             </form>
             {message && (

@@ -157,7 +157,7 @@ export default function YallasanaComingSoon() {
 
   return (
     <div
-      className={`${manrope.className} relative min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-stone-50 text-neutral-900 overflow-hidden`}
+      className={`${manrope.className} relative min-h-screen bg-linear-to-br from-indigo-50 via-slate-50 to-stone-50 text-neutral-900 overflow-hidden`}
     >
       {/* Scattered animated blurred blobs (purplish palette) */}
       {[
@@ -245,7 +245,7 @@ export default function YallasanaComingSoon() {
         <div className='grid items-center gap-10 md:grid-cols-2'>
           {/* Left: Slideshow */}
           <div
-            className='relative aspect-[16/12] w-full overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm'
+            className='relative aspect-16/12 w-full overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm'
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
           >
@@ -258,7 +258,7 @@ export default function YallasanaComingSoon() {
                   willChange: 'auto',
                 }}
               />
-              <div className='absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent' />
+              <div className='absolute inset-0 bg-linear-to-t from-black/35 via-black/10 to-transparent' />
             </div>
 
             {/* Foreground content */}
@@ -563,7 +563,7 @@ function ValueBlock({
       <ul className='mt-3 space-y-2 text-md text-neutral-700'>
         {points.map((p) => (
           <li key={p} className='flex items-start gap-2'>
-            <span className='mt-1 inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sky-700' />
+            <span className='mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-sky-700' />
             <span>{p}</span>
           </li>
         ))}

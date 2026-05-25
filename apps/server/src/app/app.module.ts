@@ -1,17 +1,18 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { AppService } from './app.service';
-import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
-import { clerkMiddleware } from '@clerk/express';
-import { AuthModule } from 'src/auth/auth.module';
-import { UserModule } from 'src/user/user.module';
-import { PrismaModule } from 'src/common/database/prisma.module';
-import { ClerkAuthGuard } from 'src/auth/clerk-auth.guard';
-import { AppController } from './app.controller';
-import { ClerkModule } from 'src/auth/providers/clerk.module';
-import { OnboardingModule } from 'src/onboarding/onboarding.module';
-import { TeacherModule } from 'src/teacher/teacher.module';
-import { LoggerModule } from 'src/common/logger';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
+import { AppService } from './app.service'
+import { ConfigModule } from '@nestjs/config'
+import { APP_GUARD } from '@nestjs/core'
+import { clerkMiddleware } from '@clerk/express'
+import { AuthModule } from 'src/auth/auth.module'
+import { UserModule } from 'src/user/user.module'
+import { PrismaModule } from 'src/common/database/prisma.module'
+import { ClerkAuthGuard } from 'src/auth/clerk-auth.guard'
+import { AppController } from './app.controller'
+import { ClerkModule } from 'src/auth/providers/clerk.module'
+import { OnboardingModule } from 'src/onboarding/onboarding.module'
+import { TeacherModule } from 'src/teacher/teacher.module'
+import { LoggerModule } from 'src/common/logger'
+import { TRPCModule } from 'nestjs-trpc-v2'
 
 @Module({
   imports: [
@@ -25,6 +26,9 @@ import { LoggerModule } from 'src/common/logger';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+    TRPCModule.forRoot({
+      autoSchemaFile: '../../packages/trpc/src/server',
     }),
   ],
   controllers: [AppController],
@@ -49,6 +53,6 @@ export class AppModule implements NestModule {
           // audience: process.env.CLERK_JWT_AUDIENCE,
         }),
       )
-      .forRoutes('*');
+      .forRoutes('*')
   }
 }

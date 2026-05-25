@@ -1,41 +1,47 @@
-# Build stage
-FROM node:20-slim AS builder
+# Build from the monorepo root (pnpm workspace):
+#   docker build -f apps/server/Dockerfile -t yallasana-server .
 
+FROM node:22-slim AS base
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
+
+FROM base AS deps
 WORKDIR /app
 
-# 1. Copy package files
-COPY package*.json ./
+# Workspace manifests (cache-friendly layer)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/server/package.json apps/server/
+COPY apps/web/package.json apps/web/
+COPY apps/mobile/package.json apps/mobile/
+COPY packages/trpc/package.json packages/trpc/
+COPY packages/eslint-config/package.json packages/eslint-config/
+COPY packages/typescript-config/package.json packages/typescript-config/
 
-# 2. Copy Prisma schema FIRST (so postinstall can find it)
-RUN mkdir -p prisma
-COPY src/common/database/prisma/schema.prisma prisma/schema.prisma
+# Prisma schema must exist before postinstall runs prisma generate
+COPY apps/server/prisma.config.ts apps/server/
+COPY apps/server/src/common/database/prisma/schema.prisma \
+  apps/server/src/common/database/prisma/schema.prisma
 
-# 3. NOW install deps → postinstall runs prisma generate and finds the schema
-RUN npm ci
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
+RUN pnpm install --frozen-lockfile --filter @yallasana/server...
 
-# 4. Copy the rest of the source code
-COPY . .
+FROM deps AS builder
+COPY apps/server apps/server
+COPY packages/trpc packages/trpc
 
-# 5. Build NestJS (client is now generated)
-RUN npm run build
+RUN pnpm --filter @yallasana/server build
 
-# Production stage
-FROM node:20-slim AS production
+# Portable production tree (includes prisma CLI for runtime migrate deploy)
+RUN pnpm --filter @yallasana/server deploy --legacy /prod/server
 
+FROM node:22-slim AS production
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules 
-COPY --from=builder /app/prisma ./prisma
-
-# ←←← ADD THIS LINE ←←←
-COPY --from=builder /app/src/common/database/prisma/migrations ./prisma/migrations
+COPY --from=builder /prod/server ./
 
 ENV NODE_ENV=production
-EXPOSE ${PORT:-3000}
+EXPOSE 3000
 
-# Only run migrations at runtime (DATABASE_URL exists here)
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && node dist/main.js"]

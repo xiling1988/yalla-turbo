@@ -12,3 +12,11 @@ pnpm --filter @yallasana/server prisma:migrate
 ```
 
 API docs (Swagger): http://localhost:3000/api
+
+## Docker image
+
+Build from the **monorepo root** (pnpm workspace context):
+
+```bash
+docker build -f apps/server/Dockerfile -t yallasana-server .
+```

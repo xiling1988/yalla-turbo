@@ -12,8 +12,8 @@ Turborepo monorepo for the Yallasana platform: marketing site, mobile app, and A
 
 ## Prerequisites
 
-- **Node.js** 20+
-- **pnpm** 9 (`corepack enable && corepack prepare pnpm@9.0.0 --activate`)
+- **Node.js** 22.13+ (required by pnpm 11)
+- **pnpm** 11 (`corepack enable` — version pinned in root `package.json`)
 - **Docker** (for local Postgres used by the server)
 
 ## Setup
